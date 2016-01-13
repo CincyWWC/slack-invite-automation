@@ -4,6 +4,8 @@ const Favicon = require('serve-favicon');
 const Logger = require('morgan');
 const CookieParser = require('cookie-parser');
 const BodyParser = require('body-parser');
+const Session = require('express-session');
+const MongoStore = require('connect-mongo')(Session);
 
 const Routes = require('./routes/index');
 
@@ -21,7 +23,7 @@ App.use(BodyParser.urlencoded({ extended: false }));
 App.use(CookieParser());
 App.use(Express.static(Path.join(__dirname, 'public')));
 
-App.use('/', routes);
+App.use('/', Routes);
 
 // catch 404 and forward to error handler
 App.use(function (req, res, next) {
@@ -30,12 +32,20 @@ App.use(function (req, res, next) {
   next(err);
 });
 
+// use mongo to store session data
+App.use(Session({
+  cookie: { maxAge: 1000*60*2 },
+  store: new MongoStore({
+    url: 'mongodb://tzmanics:jy2UF7ja@novus.modulusmongo.net:27017/aqa4vaDe'
+  })
+}));
+
 // error handlers
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function (err, req, res, next) {
+if (App.get('env') === 'development') {
+  App.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
@@ -46,7 +56,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function (err, req, res, next) {
+App.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
     message: err.message,
@@ -54,4 +64,4 @@ app.use(function (err, req, res, next) {
   });
 });
 
-module.exports = app;
+module.exports = App;
